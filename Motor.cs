@@ -7,8 +7,11 @@ namespace  SpeedTest
         const double maxAcceleration = 30;
         int PositionX = 0, PositionY = 0;
 
-        const double ACCELERATION = 0.02, INCREMENT = 0.01;
+        const double ACCELERATION = 0.015, INCREMENT = 0.01;
 
+        public void Move(double xy) {
+            Move(xy, xy);
+        }
         public void Move(double x, double y)
         {
             double distance = CalculateDistance(x, y);
@@ -23,25 +26,34 @@ namespace  SpeedTest
             double accelerationTime = 0.0, halfDistance = distance/2;
 
             bool stoppingMode = false, reachMaxVelocity = false;
-            // int 
+
+            double distanceMaxVelocity = PredictDistanceMaxVelocity();
+            timeMaxVelocity = PredictTimeMaxVelocity();
+            bool maxVelocityMoreThanHalfWay = distanceMaxVelocity > halfDistance;
+            Console.WriteLine(
+                "distanceMaxVelocity Approx: "+dSTR(distanceMaxVelocity)+ 
+                ", > halfWay: "+maxVelocityMoreThanHalfWay+
+                ",timeMaxVelocity: "+dSTR(timeMaxVelocity));
+            // timeMaxVelocity = 0;
             while (true)
             {
                 long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 if (now - currentTime < 10)
                     continue;
+                currentTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
                 double nextTraveledDistance = traveledDistance + (velocity / 100);
-                currentTime = now;
-                time += INCREMENT;
 
-                bool nowStoppingMode = nextTraveledDistance > halfDistance
-                                            && !stoppingMode
-                                            && reachMaxVelocity
-                                            && CheckIfStoppingMode(timeMaxVelocity, distance, nextTraveledDistance);
-
+                bool nowStoppingMode = !stoppingMode
+                                            && CheckIfStoppingMode(distance, nextTraveledDistance,velocity);
+                
                 if (nowStoppingMode && !stoppingMode)
                 {
-                    Console.WriteLine("\nTime to brake at " + dSTR(time) + " s\nApproximate Stop at :"+dSTR(time + timeMaxVelocity)+" s");
+                    Console.WriteLine(
+                        "\nTime to brake at " + dSTR(time) + 
+                         "\ndist:"+dSTR(traveledDistance) +
+                         "\nremaining:"+dSTR(distance - traveledDistance)+
+                         "\nApproximate Stop at :"+dSTR(time + timeMaxVelocity)+" s");
                     stoppingMode = true;
                     accelerationTime = 0;
                 }
@@ -58,13 +70,14 @@ namespace  SpeedTest
                     timeMaxVelocity = time;
                     reachMaxVelocity = true;
                     velocity = maxVelocity;
-                    Console.WriteLine("\nReach max velocity at " + dSTR(time) + "s");
+                    Console.WriteLine("\nReach max velocity at " + dSTR(time) + "s, distance: "+dSTR(traveledDistance));
                 }
                 if (traveledDistance >= distance || velocity < 0) {
                     break;
                 }
 
                 traveledDistance += (velocity / 100);
+                time += INCREMENT;
 
                 Point p = CalculateCurrentPosition(x, y, distance, traveledDistance);
                 Console.Write($"\r traveled v = {dSTR(velocity)}mm/s distance = {dSTR(traveledDistance)}, accelerationTime = {dSTR(accelerationTime)}, time {dSTR(time)}");
@@ -74,19 +87,49 @@ namespace  SpeedTest
             Console.WriteLine($"END MOVE, time: { dSTR(time) } s, last velocity: {velocity} m/s  \n");
         }
 
-        private bool CheckIfStoppingMode(double timeMaxVelocity, double distance, double traveledDistance)
+        private double PredictDistanceMaxVelocity()
+        {
+            double velocity = 0;
+            double distance = 0;
+            double time = 0;
+            while (velocity <= maxVelocity)
+            {
+                velocity = velocity + (ACCELERATION * time);
+                distance += velocity/100;
+                time += INCREMENT;
+            }
+            return distance;
+        }
+
+        private double PredictTimeMaxVelocity()
+        {
+            
+            double velocity = 0;
+            double time = 0;
+            while (velocity <= maxVelocity)
+            {
+                velocity = velocity + (ACCELERATION * time);
+                time += INCREMENT;
+            }
+            return time;
+        }
+
+        private bool CheckIfStoppingMode(double distance, double traveledDistance, double velocity)
         {
             double runningDistance = 0;
             double remainingDistance = runningDistance = distance - traveledDistance;
-            double velocity = maxVelocity;
-            for (double accelerationTime = 0.0; accelerationTime <= timeMaxVelocity; accelerationTime += INCREMENT)
+            double time = 0.0;
+            double sumDistance = 0;
+            while (velocity >= 0)
             {
-                velocity = velocity - (ACCELERATION * accelerationTime);
+                velocity = velocity - (ACCELERATION * time);
                 runningDistance -= velocity/100;
+                sumDistance+=Math.Abs(velocity/100);
+                time+=INCREMENT;
             }
             bool result = runningDistance <= 0;// >= remainingDistance;
             if (result) {
-                Console.Write("\n <!> Will brake: "+result+"max vel: "+dSTR(velocity)+" time:" + dSTR(timeMaxVelocity) + "s dist: "+remainingDistance);
+                Console.Write("\n <!> Will brake: "+result+", vel: "+dSTR(velocity)+" SUM DISTANCE:" + dSTR(sumDistance) + "s dist: "+remainingDistance);
             }
             // Console.WriteLine("\nCheckIfStoppingMode: "+result+ ",velocity:"+dSTR(velocity)+", remaining: "+dSTR(runningDistance) +" of "+dSTR(remainingDistance));
             return result;
