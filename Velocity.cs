@@ -42,6 +42,7 @@ namespace Case1
 
             bool reachDestination = false;
             bool stoppingMode = false;
+            bool reachMaxVelocity = false;
             double accelerationTime = 0.0;
 
             const double increment = 0.01;
@@ -55,7 +56,10 @@ namespace Case1
                 currentTime = now;
                 time += increment;
 
-                if (!stoppingMode && deccelarationTime > 0 && deccelarationTime <= time)
+                bool nowStoppingMode = !stoppingMode && reachMaxVelocity && CheckIfStoppingMode(
+                    timeMaxVelocity, distance, traveledDistance);
+
+                if (nowStoppingMode && !stoppingMode && deccelarationTime > 0)
                 {
                     Console.WriteLine("\nTime to brake at "+dSTR(time)+" s");
                     stoppingMode = true;
@@ -76,6 +80,8 @@ namespace Case1
                 }
                 if (velocity > maxVelocity)
                 {
+                    timeMaxVelocity = time;
+                    reachMaxVelocity = true;
                     velocity = maxVelocity; 
                     remaningTimeAfterMaxVelocity = (distance - traveledDistance) / velocity;
                     deccelarationTime = remaningTimeAfterMaxVelocity;
@@ -96,6 +102,23 @@ namespace Case1
             }
             Console.WriteLine($"\nDistance: {dSTR(distance)}, Traveled: {dSTR(traveledDistance)}");
             Console.WriteLine($"END MOVE, time: { dSTR(time) } s, approximated time : {dSTR(deccelarationTime + timeMaxVelocity)} \n");
+        }
+
+        private bool CheckIfStoppingMode(double timeMaxVelocity, double distance, double traveledDistance)
+        {
+           
+            double accel = -0.05;
+            double runningDistance;
+            double remainingDistance = runningDistance = distance - traveledDistance;
+            double vel = 0;
+            for(double time = 0.0; time <= timeMaxVelocity; time += 0.01)
+            {
+                vel = vel + (accel * time);
+                runningDistance += vel/100;
+            }
+            bool result = runningDistance <= 0;
+            // Console.WriteLine("\nCheckIfStoppingMode: "+result+ ",timeMaxVelocity:"+timeMaxVelocity+", remaining: "+dSTR(runningDistance) +" of "+dSTR(remainingDistance));
+            return result;
         }
 
         private Point CalculateCurrentPosition(double x, double y, double distance, double traveled)
