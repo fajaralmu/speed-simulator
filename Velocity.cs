@@ -20,7 +20,7 @@ namespace Case1
         const double maxAcceleration = 30;
         int PositionX = 0, PositionY = 0;
 
-        const double ACCELERATION = 0.02;
+        const double ACCELERATION = 0.02, INCREMENT = 0.01;
 
         public void Move(double x, double y)
         {
@@ -45,8 +45,7 @@ namespace Case1
             bool stoppingMode = false;
             bool reachMaxVelocity = false;
             double accelerationTime = 0.0;
-
-            const double increment = 0.01;
+            double midDistance = distance/2;
             // int 
             while (!reachDestination)
             {
@@ -55,9 +54,9 @@ namespace Case1
                     continue;
 
                 currentTime = now;
-                time += increment;
+                time += INCREMENT;
 
-                bool nowStoppingMode = traveledDistance > distance/2
+                bool nowStoppingMode = traveledDistance > midDistance
                                             && !stoppingMode
                                             && reachMaxVelocity
                                             && CheckIfStoppingMode(timeMaxVelocity, distance, traveledDistance);
@@ -66,6 +65,7 @@ namespace Case1
                 {
                     Console.WriteLine("\nTime to brake at " + dSTR(time) + " s");
                     Console.WriteLine("Remaming distance: "+dSTR(distance - traveledDistance));
+                    Console.WriteLine("Stop at :"+dSTR(time + timeMaxVelocity)+" s");
                     stoppingMode = true;
                     acceleration = -acceleration;
                     accelerationTime = 0;
@@ -74,7 +74,7 @@ namespace Case1
                 if (velocity < maxVelocity || stoppingMode)
                 {
                     velocity = velocity + (acceleration * accelerationTime);
-                    accelerationTime += increment;
+                    accelerationTime += INCREMENT;
                 }
 
                 if (velocity < 0)
@@ -83,7 +83,6 @@ namespace Case1
                     Console.WriteLine("\n===== STOPPED ======= :(");
                     break;
                 }
-
                 if (!reachMaxVelocity && velocity > maxVelocity)
                 {
                     timeMaxVelocity = time;
@@ -101,7 +100,8 @@ namespace Case1
 
 
                 Point p = CalculateCurrentPosition(x, y, distance, traveledDistance);
-                Console.Write($"\r traveled a = {dSTR(acceleration)}mm/s2 v = {dSTR(velocity)}mm/s s = {dSTR(traveledDistance)} mm, position: {p.xStr}, {p.yStr}, time {dSTR(time)}");
+                Console.Write($"\r traveled a = {dSTR(acceleration)}mm/s2 v = {dSTR(velocity)}mm/s distance = {dSTR(traveledDistance)}, remaining dist={dSTR(distance - traveledDistance)}, accelerationTime = {accelerationTime}, time {dSTR(time)}");
+                // Console.Write($"\r traveled a = {dSTR(acceleration)}mm/s2 v = {dSTR(velocity)}mm/s s = {dSTR(traveledDistance)} mm, position: {p.xStr}, {p.yStr}, time {dSTR(time)}");
             }
             Console.WriteLine($"\nDistance: {dSTR(distance)}, Traveled: {dSTR(traveledDistance)}");
             Console.WriteLine($"END MOVE, time: { dSTR(time) } s \n");
@@ -109,21 +109,19 @@ namespace Case1
 
         private bool CheckIfStoppingMode(double timeMaxVelocity, double distance, double traveledDistance)
         {
-
-            double acceleration = ACCELERATION;
             double runningDistance = 0;
-            double remainingDistance  = distance - traveledDistance;
-            double velocity = 0;
-            for (double time = 0.0; time <= timeMaxVelocity; time += 0.01)
+            double remainingDistance = runningDistance = distance - traveledDistance;
+            double velocity = maxVelocity;
+            for (double accelerationTime = 0.0; accelerationTime <= timeMaxVelocity; accelerationTime += INCREMENT)
             {
-                velocity = velocity + (acceleration * time);
-                runningDistance += velocity/100;
+                velocity = velocity - (ACCELERATION * accelerationTime);
+                runningDistance -= velocity/100;
             }
-            bool result = runningDistance >= remainingDistance;
+            bool result = runningDistance <= 0;// >= remainingDistance;
             if (result) {
-                Console.Write("\n <!> Will brake: "+result+" time:" + dSTR(timeMaxVelocity) + "s dist: "+remainingDistance);
+                Console.Write("\n <!> Will brake: "+result+"max vel: "+dSTR(velocity)+" time:" + dSTR(timeMaxVelocity) + "s dist: "+remainingDistance);
             }
-            // Console.WriteLine("\nCheckIfStoppingMode: "+result+ ",timeMaxVelocity:"+timeMaxVelocity+", remaining: "+dSTR(runningDistance) +" of "+dSTR(remainingDistance));
+            // Console.WriteLine("\nCheckIfStoppingMode: "+result+ ",velocity:"+dSTR(velocity)+", remaining: "+dSTR(runningDistance) +" of "+dSTR(remainingDistance));
             return result;
         }
 
