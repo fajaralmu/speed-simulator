@@ -10,8 +10,8 @@ namespace SpeedTest
         {
             Motor m1 = new Motor();
             // m1.Move(11,5);
-            m1.Move(90);
-            // m1.Move(200, 100);
+            // m1.Move(6);
+            m1.Move(200, 100);
 
             // simulateAccel();
             // simulateDeccel();

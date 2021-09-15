@@ -50,7 +50,7 @@ namespace  SpeedTest
                 if (nowStoppingMode && !stoppingMode)
                 {
                     Console.WriteLine(
-                        "\nTime to brake at " + dSTR(time) + 
+                        "\nTime to brake at " + dSTR(time) + " s" + 
                          "\ndist:"+dSTR(traveledDistance) +
                          "\nremaining:"+dSTR(distance - traveledDistance)+
                          "\nApproximate Stop at :"+dSTR(time + timeMaxVelocity)+" s");
@@ -80,11 +80,11 @@ namespace  SpeedTest
                 time += INCREMENT;
 
                 Point p = CalculateCurrentPosition(x, y, distance, traveledDistance);
-                Console.Write($"\r traveled v = {dSTR(velocity)}mm/s distance = {dSTR(traveledDistance)}, accelerationTime = {dSTR(accelerationTime)}, time {dSTR(time)}");
+                Console.Write($"\rTraveled v = {dSTR(velocity)}mm/s distance = {dSTR(traveledDistance)}, accelerationTime = {dSTR(accelerationTime)}, time {dSTR(time)}");
                 // Console.Write($"\r traveled a = {dSTR(acceleration)}mm/s2 v = {dSTR(velocity)}mm/s s = {dSTR(traveledDistance)} mm, position: {p.xStr}, {p.yStr}, time {dSTR(time)}");
             }
-            Console.WriteLine($"\nDistance: {dSTR(distance)}, Traveled: {dSTR(traveledDistance)}");
-            Console.WriteLine($"END MOVE, time: { dSTR(time) } s, last velocity: {velocity} m/s  \n");
+            Console.WriteLine($"\nDistance: { dSTR(distance) }, Traveled: { dSTR(traveledDistance) }");
+            Console.WriteLine($"END MOVE, time: { dSTR(time) } s, last velocity: { dSTR(velocity) } m/s  \n");
         }
 
         private double PredictDistanceMaxVelocity()
@@ -129,7 +129,12 @@ namespace  SpeedTest
             }
             bool result = runningDistance <= 0;// >= remainingDistance;
             if (result) {
-                Console.Write("\n <!> Will brake: "+result+", vel: "+dSTR(velocity)+" SUM DISTANCE:" + dSTR(sumDistance) + "s dist: "+remainingDistance);
+                Console.Write(
+                    "\n<!> Will brake: "+result+
+                    " vel: "+dSTR(velocity)+
+                    " SUM DISTANCE:" + dSTR(sumDistance) +" s "+ 
+                    " dist: "+ dSTR(remainingDistance)+
+                    " time required until 0m/s: "+dSTR(time)+"s");
             }
             // Console.WriteLine("\nCheckIfStoppingMode: "+result+ ",velocity:"+dSTR(velocity)+", remaining: "+dSTR(runningDistance) +" of "+dSTR(remainingDistance));
             return result;
